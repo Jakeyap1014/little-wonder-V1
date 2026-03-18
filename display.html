@@ -788,22 +788,35 @@ function update(s) {
   showScreen(s.screen);
 }
 
-// ----- Click handler -----
-C.addEventListener('click', function() {
-  if (curScreen === 'home' || curScreen === 'battery_low' || curScreen === 'charging') {
-    fetch('/camera/start', { method:'POST' });
-    fetch('/display/update', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({screen:'viewfinder'}) });
-  } else if (curScreen === 'viewfinder') {
-    fetch('/scan', { method:'POST' });
-  } else if (curScreen === 'menu') {
-    // handled by menu-item onclick
-  } else if (curScreen === 'collection_browse') {
-    fetch('/menu/home', { method:'POST' });
-  } else if (curScreen === 'collection_grid') {
-    // handled by cat-item onclick
+// ----- Touch overlay for cog DRM -----
+// cog DRM mode needs full-screen overlay to catch taps reliably
+var touchOverlay = document.createElement("div");
+touchOverlay.style.cssText = "position:fixed;top:0;left:0;width:480px;height:480px;z-index:9998;background:transparent;";
+document.body.appendChild(touchOverlay);
+
+function handleTap(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (curScreen === "home" || curScreen === "battery_low" || curScreen === "charging") {
+    fetch("/camera/start", { method:"POST" });
+    fetch("/display/update", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({screen:"viewfinder"}) });
+  } else if (curScreen === "viewfinder") {
+    fetch("/scan", { method:"POST" });
+  } else if (curScreen === "menu") {
+    var rect = touchOverlay.getBoundingClientRect();
+    var y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    if (y > 160 && y < 250) { menuAction("collection"); }
+    else if (y > 260 && y < 350) { menuAction("missions"); }
+    else { fetch("/menu/home", { method:"POST" }); }
+  } else if (curScreen === "collection_grid" || curScreen === "collection_browse") {
+    fetch("/menu/home", { method:"POST" });
+  } else {
+    fetch("/display/update", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({}) });
   }
-});
+}
+
+touchOverlay.addEventListener("touchstart", handleTap, { passive: false });
+touchOverlay.addEventListener("click", handleTap);
 
 // Keyboard shortcuts for testing
 document.addEventListener('keydown', function(e) {
