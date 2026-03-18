@@ -475,7 +475,7 @@ def tts_and_play(text, filename="wonder_tts"):
     with _tts_lock:
         _tts_counter += 1
         n = _tts_counter
-    out = f"/tmp/{filename}_{n}.wav"
+    out = f"{BASE_DIR}/data/{filename}_{n}.wav"
     set_state(speaking=True)
     result = elevenlabs_tts(text, out)
     if result:
@@ -531,7 +531,7 @@ SFX_TONES = {
 def play_sfx(name):
     if name not in SFX_TONES:
         return
-    path = f'/tmp/sfx_{name}.wav'
+    path = f'{BASE_DIR}/data/sfx_{name}.wav'
     wav = _gen_sfx_wav(SFX_TONES[name])
     with open(path, 'wb') as f:
         f.write(wav)
